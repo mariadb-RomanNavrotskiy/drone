@@ -1,0 +1,63 @@
+---
+- hosts: drone
+  become: yes
+  gather_facts: no
+  tasks:
+    - include: python-compose.yml
+
+    - name: Start drone
+      docker_compose:
+        project_name: "{{ compose_project_name }}"
+        pull: yes
+        definition:
+          version: "2.4"
+          volumes:
+            drone:
+            autoscaler:
+          services:
+            drone:
+              container_name: drone
+              image: drone/drone:1
+              ports:
+                - 80:80
+              volumes:
+                - drone:/var/lib/drone/
+              restart: always
+              environment:
+                - "DRONE_GITHUB_CLIENT_ID={{ drone_github_client }}"
+                - "DRONE_GITHUB_CLIENT_SECRET={{ drone_github_secret }}"
+                - "DRONE_RPC_SECRET={{ drone_rpc_secret }}"
+                - "DRONE_SERVER_HOST={{ drone_host }}"
+                - "DRONE_SERVER_PROTO={{ drone_proto }}"
+                - "DRONE_LOGS_DEBUG={{ drone_debug }}"
+                - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
+                - DRONE_JSONNET_ENABLED=true
+            autoscaler:
+              container_name: autoscaler
+              image: drone/autoscaler:1
+              ports:
+                - 8080:8080
+              volumes:
+                - autoscaler:/data
+              restart: always
+              environment:
+                - "DRONE_SERVER_HOST={{ autoscaler_host }}"
+                - "DRONE_SERVER_TOKEN={{ drone_admin_token }}"
+                - "DRONE_AGENT_TOKEN={{ drone_rpc_secret }}"
+                - "DRONE_SERVER_PROTO={{ autoscaler_proto }}"
+                - "DRONE_LOGS_DEBUG={{ autoscaler_debug }}"
+# generic agent scaling options
+                - DRONE_INTERVAL=60s
+                - DRONE_POOL_MIN=0
+                - DRONE_POOL_MAX=5
+                - DRONE_POOL_MIN_AGE=15m
+                - DRONE_CAPACITY_BUFFER=0
+                - DRONE_AGENT_CONCURRENCY=1
+
+# aws agent scaling options
+                - AWS_IAM=true
+                - DRONE_AMAZON_REGION=us-east-1
+                - DRONE_AMAZON_SUBNET_ID=subnet-f64a7cab
+                - DRONE_AMAZON_SECURITY_GROUP=sg-c6275fb0
+                - DRONE_AMAZON_SSHKEY=roman
+                - DRONE_AMAZON_INSTANCE=c4.2xlarge
