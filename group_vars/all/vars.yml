@@ -1,6 +1,6 @@
+ansible_user: ec2-user
 ansible_python_interpreter: /usr/bin/python3
-ansible_user: mdb
-compose_project_name: mdb
+compose_project_name: columnstore
 
 drone_admin_user: mariadb-RomanNavrotskiy
 drone_admin_token: "{{ drone_admin_token_vault }}"
@@ -8,10 +8,13 @@ drone_github_client: "{{ drone_github_client_vault }}"
 drone_github_secret: "{{ drone_github_secret_vault }}"
 drone_rpc_secret: "{{ drone_rpc_secret_vault }}"
 
-drone_host: "{{ inventory_hostname }}"
-drone_proto: http
+drone_host: ci.columnstore.mariadb.net
+drone_proto: https
 drone_debug: false
 
-autoscaler_host: "{{ drone_host }}"
+autoscaler_host: autoscaler.columnstore.mariadb.net
 autoscaler_proto: "{{ drone_proto }}"
 autoscaler_debug: "{{ drone_debug }}"
+
+aws_access_key_id: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+aws_secret_access_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"

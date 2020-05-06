@@ -1,9 +1,9 @@
 ---
-- hosts: drone
+
+- hosts: type_aws_eip
   become: yes
   gather_facts: no
   tasks:
-    - include: python-compose.yml
 
     - name: Start drone
       docker_compose:
@@ -12,14 +12,39 @@
         definition:
           version: "2.4"
           volumes:
+            acme:
             drone:
             autoscaler:
           services:
+            traefik:
+              container_name: traefik
+              restart: "always"
+              image: traefik:v2.2
+              command:
+              - --entrypoints.web.address=:80
+              - --entrypoints.websecure.address=:443
+              - --entrypoints.web.http.redirections.entrypoint.to=websecure
+              - --entrypoints.web.http.redirections.entrypoint.scheme=https
+              - --providers.docker=true
+              - --providers.docker.exposedbydefault=false
+              - --certificatesResolvers.myresolver.acme.email=romcheck@gmail.com
+              - --certificatesResolvers.myresolver.acme.storage=/acme/acme.json
+              - --certificatesresolvers.myresolver.acme.dnschallenge=true
+              - --certificatesresolvers.myresolver.acme.dnschallenge.provider=route53
+#              - --log.level=DEBUG
+              ports:
+              - 80:80
+              - 443:443
+              environment:
+              - "AWS_ACCESS_KEY_ID={{ aws_access_key_id }}"
+              - "AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}"
+              volumes:
+              - /var/run/docker.sock:/var/run/docker.sock
+              - acme:/acme
+              - /opt/traefik:/traefik
             drone:
               container_name: drone
               image: drone/drone:1
-              ports:
-                - 80:80
               volumes:
                 - drone:/var/lib/drone/
               restart: always
@@ -32,11 +57,18 @@
                 - "DRONE_LOGS_DEBUG={{ drone_debug }}"
                 - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
                 - DRONE_JSONNET_ENABLED=true
+              labels:
+              - traefik.enable=true
+              - "traefik.http.routers.drone.rule=Host(`{{ drone_host }}`)"
+              - traefik.http.routers.drone.entrypoints=websecure
+              - traefik.http.routers.drone.tls.certresolver=myresolver
+              logging: &log
+                options:
+                  max-size: "10m"
+                  max-file: "10"
             autoscaler:
               container_name: autoscaler
               image: drone/autoscaler:1
-              ports:
-                - 8080:8080
               volumes:
                 - autoscaler:/data
               restart: always
@@ -49,7 +81,7 @@
 # generic agent scaling options
                 - DRONE_INTERVAL=60s
                 - DRONE_POOL_MIN=0
-                - DRONE_POOL_MAX=5
+                - DRONE_POOL_MAX=10
                 - DRONE_POOL_MIN_AGE=15m
                 - DRONE_CAPACITY_BUFFER=0
                 - DRONE_AGENT_CONCURRENCY=1
@@ -61,3 +93,10 @@
                 - DRONE_AMAZON_SECURITY_GROUP=sg-c6275fb0
                 - DRONE_AMAZON_SSHKEY=roman
                 - DRONE_AMAZON_INSTANCE=c4.2xlarge
+              labels:
+              - traefik.enable=true
+              - "traefik.http.routers.autoscaler.rule=Host(`{{ autoscaler_host }}`)"
+              - traefik.http.routers.autoscaler.entrypoints=websecure
+              - traefik.http.routers.autoscaler.tls.certresolver=myresolver
+              logging:
+                <<: *log
