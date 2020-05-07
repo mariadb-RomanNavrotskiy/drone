@@ -6,6 +6,7 @@ resource "aws_instance" "drone" {
   subnet_id              = "${aws_subnet.drone.id}"
   vpc_security_group_ids = ["${aws_security_group.drone.id}"]
   key_name               = "roman"
+  iam_instance_profile   = "buildbot"
   root_block_device {
     volume_size           = 20
   }

@@ -73,7 +73,7 @@
                 - autoscaler:/data
               restart: always
               environment:
-                - "DRONE_SERVER_HOST={{ autoscaler_host }}"
+                - "DRONE_SERVER_HOST={{ drone_host }}"
                 - "DRONE_SERVER_TOKEN={{ drone_admin_token }}"
                 - "DRONE_AGENT_TOKEN={{ drone_rpc_secret }}"
                 - "DRONE_SERVER_PROTO={{ autoscaler_proto }}"
@@ -95,6 +95,7 @@
                 - DRONE_AMAZON_INSTANCE=c4.2xlarge
               labels:
               - traefik.enable=true
+              - traefik.http.services.autoscaler.loadbalancer.server.port=8080
               - "traefik.http.routers.autoscaler.rule=Host(`{{ autoscaler_host }}`)"
               - traefik.http.routers.autoscaler.entrypoints=websecure
               - traefik.http.routers.autoscaler.tls.certresolver=myresolver
