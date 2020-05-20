@@ -10,7 +10,9 @@ drone_rpc_secret: "{{ drone_rpc_secret_vault }}"
 
 drone_host: ci.columnstore.mariadb.net
 drone_proto: https
-drone_debug: false
+drone_debug: true
+
+drone_git_force_auth: true
 
 autoscaler_host: autoscaler.columnstore.mariadb.net
 autoscaler_proto: "{{ drone_proto }}"

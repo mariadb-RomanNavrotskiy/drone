@@ -46,7 +46,7 @@
               container_name: drone
               image: drone/drone:1
               volumes:
-                - drone:/var/lib/drone/
+                - drone:/data
               restart: always
               environment:
                 - "DRONE_GITHUB_CLIENT_ID={{ drone_github_client }}"
@@ -56,6 +56,7 @@
                 - "DRONE_SERVER_PROTO={{ drone_proto }}"
                 - "DRONE_LOGS_DEBUG={{ drone_debug }}"
                 - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
+                - "DRONE_GIT_ALWAYS_AUTH={{ drone_git_force_auth }}"
                 - DRONE_JSONNET_ENABLED=true
               labels:
               - traefik.enable=true
