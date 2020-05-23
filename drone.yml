@@ -94,6 +94,7 @@
                 - DRONE_AMAZON_SECURITY_GROUP=sg-c6275fb0
                 - DRONE_AMAZON_SSHKEY=roman
                 - DRONE_AMAZON_INSTANCE=c4.2xlarge
+                - DRONE_AMAZON_VOLUME_SIZE=100
               labels:
               - traefik.enable=true
               - traefik.http.services.autoscaler.loadbalancer.server.port=8080
