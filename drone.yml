@@ -65,7 +65,7 @@
               - traefik.http.routers.drone.tls.certresolver=myresolver
               logging: &log
                 options:
-                  max-size: "10m"
+                  max-size: "50m"
                   max-file: "10"
             autoscaler:
               container_name: autoscaler
