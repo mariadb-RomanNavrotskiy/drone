@@ -56,6 +56,7 @@
                 - "DRONE_SERVER_PROTO={{ drone_proto }}"
                 - "DRONE_LOGS_DEBUG={{ drone_debug }}"
                 - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
+                - "DRONE_USER_FILTER={{ drone_user_filter }}"
                 - "DRONE_GIT_ALWAYS_AUTH={{ drone_git_force_auth }}"
                 - DRONE_JSONNET_ENABLED=true
               labels:
@@ -95,6 +96,7 @@
                 - DRONE_AMAZON_SSHKEY=roman
                 - DRONE_AMAZON_INSTANCE=c4.2xlarge
                 - DRONE_AMAZON_VOLUME_SIZE=100
+                - DRONE_AMAZON_MARKET_TYPE=spot
               labels:
               - traefik.enable=true
               - traefik.http.services.autoscaler.loadbalancer.server.port=8080
