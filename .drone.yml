@@ -1,16 +1,17 @@
 ---
 kind: pipeline
-type: docker
-name: default
+name: pipeline
 
 platform:
   os: linux
   arch: amd64
 
-clone:
-  depth: 10
-
+steps:
 - name: step
   image: alpine
   commands:
-  - echo hello
+  - echo hello!
+
+trigger:
+  branch:
+  - master
