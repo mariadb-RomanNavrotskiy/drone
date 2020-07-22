@@ -12,7 +12,7 @@
   - name: Install essential python3 with pip3
     package: name=python3-pip
 # arm amazon linux ami essentials
-#    loop:
+#    name:
 #    - gcc
 #    - python3-devel
 #    - libffi-devel

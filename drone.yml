@@ -49,16 +49,21 @@
                 - drone:/data
               restart: always
               environment:
-                - "DRONE_GITHUB_CLIENT_ID={{ drone_github_client }}"
-                - "DRONE_GITHUB_CLIENT_SECRET={{ drone_github_secret }}"
-                - "DRONE_RPC_SECRET={{ drone_rpc_secret }}"
-                - "DRONE_SERVER_HOST={{ drone_host }}"
-                - "DRONE_SERVER_PROTO={{ drone_proto }}"
-                - "DRONE_LOGS_DEBUG={{ drone_debug }}"
-                - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
-                - "DRONE_USER_FILTER={{ drone_user_filter }}"
-                - "DRONE_GIT_ALWAYS_AUTH={{ drone_git_force_auth }}"
-                - DRONE_JSONNET_ENABLED=true
+              - "DRONE_GITHUB_CLIENT_ID={{ drone_github_client }}"
+              - "DRONE_GITHUB_CLIENT_SECRET={{ drone_github_secret }}"
+              - "DRONE_RPC_SECRET={{ drone_rpc_secret }}"
+              - "DRONE_SERVER_HOST={{ drone_host }}"
+              - "DRONE_SERVER_PROTO={{ drone_proto }}"
+              - "DRONE_LOGS_DEBUG={{ drone_debug }}"
+              - "DRONE_USER_CREATE=username:{{ drone_admin_user }},admin:true,token:{{ drone_admin_token }}"
+              - "DRONE_USER_FILTER={{ drone_user_filter }}"
+              - "DRONE_GIT_ALWAYS_AUTH={{ drone_git_force_auth }}"
+              - DRONE_JSONNET_ENABLED=true
+              - "AWS_ACCESS_KEY_ID={{ aws_access_key_id }}"
+              - "AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}"
+              - "DRONE_S3_BUCKET={{ drone_logs_s3_bucket }}"
+              - "AWS_DEFAULT_REGION={{ aws_region }}"
+              - "AWS_REGION={{ aws_region }}"
               labels:
               - traefik.enable=true
               - "traefik.http.routers.drone.rule=Host(`{{ drone_host }}`)"
@@ -75,28 +80,29 @@
                 - autoscaler:/data
               restart: always
               environment:
-                - "DRONE_SERVER_HOST={{ drone_host }}"
-                - "DRONE_SERVER_TOKEN={{ drone_admin_token }}"
-                - "DRONE_AGENT_TOKEN={{ drone_rpc_secret }}"
-                - "DRONE_SERVER_PROTO={{ autoscaler_proto }}"
-                - "DRONE_LOGS_DEBUG={{ autoscaler_debug }}"
-# generic agent scaling options
-                - DRONE_INTERVAL=60s
-                - DRONE_POOL_MIN=0
-                - DRONE_POOL_MAX=10
-                - DRONE_POOL_MIN_AGE=15m
-                - DRONE_CAPACITY_BUFFER=0
-                - DRONE_AGENT_CONCURRENCY=1
-
-# aws agent scaling options
-                - AWS_IAM=true
-                - DRONE_AMAZON_REGION=us-east-1
-                - DRONE_AMAZON_SUBNET_ID=subnet-f64a7cab
-                - DRONE_AMAZON_SECURITY_GROUP=sg-c6275fb0
-                - DRONE_AMAZON_SSHKEY=roman
-                - DRONE_AMAZON_INSTANCE=c4.2xlarge
-                - DRONE_AMAZON_VOLUME_SIZE=100
-                - DRONE_AMAZON_MARKET_TYPE=spot
+              - "DRONE_SERVER_HOST={{ drone_host }}"
+              - "DRONE_SERVER_TOKEN={{ drone_admin_token }}"
+              - "DRONE_AGENT_TOKEN={{ drone_rpc_secret }}"
+              - "DRONE_SERVER_PROTO={{ autoscaler_proto }}"
+              - "DRONE_LOGS_DEBUG={{ autoscaler_debug }}"
+# generic runner scaling options
+              - DRONE_INTERVAL=60s
+              - DRONE_POOL_MIN=0
+              - DRONE_POOL_MAX=16
+              - DRONE_POOL_MIN_AGE=30m
+              - DRONE_CAPACITY_BUFFER=0
+              - DRONE_AGENT_CONCURRENCY=1
+              - DRONE_REAPER_ENABLED=true
+              - DRONE_REAPER_INTERVAL=5m
+# aws runner options
+              - AWS_IAM=true
+              - "DRONE_AMAZON_REGION={{ aws_region }}"
+              - DRONE_AMAZON_SUBNET_ID=subnet-f64a7cab
+              - DRONE_AMAZON_SECURITY_GROUP=sg-c6275fb0
+              - DRONE_AMAZON_SSHKEY=roman
+              - DRONE_AMAZON_INSTANCE=c4.2xlarge
+              - DRONE_AMAZON_VOLUME_SIZE=100
+              - DRONE_AMAZON_MARKET_TYPE=spot
               labels:
               - traefik.enable=true
               - traefik.http.services.autoscaler.loadbalancer.server.port=8080
