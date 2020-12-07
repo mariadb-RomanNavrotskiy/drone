@@ -5,13 +5,13 @@ compose_project_name: columnstore
 # github org filter
 drone_user_filter: mariadb-corporation
 
-drone_admin_user: "mariadb-RomanNavrotskiy,pleblanc1976"
+drone_admin_user: "mariadb-RomanNavrotskiy"
 drone_admin_token: "{{ drone_admin_token_vault }}"
 drone_github_client: "{{ drone_github_client_vault }}"
 drone_github_secret: "{{ drone_github_secret_vault }}"
 drone_rpc_secret: "{{ drone_rpc_secret_vault }}"
 
-drone_host: ci.columnstore.mariadb.net
+drone_host: ci2.columnstore.mariadb.net
 drone_proto: https
 drone_debug: true
 
@@ -19,7 +19,7 @@ drone_logs_s3_bucket: drone-log
 
 drone_git_force_auth: true
 
-autoscaler_host: autoscaler.columnstore.mariadb.net
+autoscaler_host: autoscaler2.columnstore.mariadb.net
 autoscaler_proto: "{{ drone_proto }}"
 autoscaler_debug: "{{ drone_debug }}"
 

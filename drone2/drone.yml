@@ -3,24 +3,7 @@
 - hosts: type_aws_eip
   become: yes
   gather_facts: no
-
-  handlers:
-  - name: restart autoscaler
-    command: "docker restart autoscaler"
-
   tasks:
-
-    - name: Create init directory
-      file:
-        path: "/opt/init"
-        state: directory
-
-    - name: Make config
-      copy:
-        src: init.yml
-        dest: "/opt/init/"
-      notify:
-      - restart autoscaler
 
     - name: Start drone
       docker_compose:
@@ -95,7 +78,6 @@
               image: drone/autoscaler:1
               volumes:
                 - autoscaler:/data
-                - /opt/init/init.yml:/init/init.yml
               restart: always
               environment:
               - "DRONE_SERVER_HOST={{ drone_host }}"
@@ -105,14 +87,16 @@
               - "DRONE_LOGS_DEBUG={{ autoscaler_debug }}"
 # generic runner scaling options
               - DRONE_POOL_MIN=0
-              - DRONE_POOL_MAX=24
-              #- DRONE_POOL_MIN_AGE=10m
-              - DRONE_POOL_MIN_AGE=1h
+              - DRONE_POOL_MAX=8
+              - DRONE_POOL_MIN_AGE=4h
               - DRONE_AGENT_CONCURRENCY=1
-              - DRONE_REAPER_ENABLED=true
-              - DRONE_ENABLE_PINGER=true
-              - DRONE_ENABLE_REAPER=true
-              - DRONE_REAPER_INTERVAL=5m
+              - DRONE_AMAZON_IMAGE=ami-08306577a6694f5e7
+              - DRONE_AMAZON_MARKET_TYPE=spot
+              - DRONE_AMAZON_RETRIES=15
+              #- DRONE_REAPER_ENABLED=true
+              #- DRONE_ENABLE_PINGER=true
+              #- DRONE_ENABLE_REAPER=true
+              #- DRONE_REAPER_INTERVAL=5m
 # aws runner options
               - AWS_IAM=true
               - "DRONE_AMAZON_REGION={{ aws_region }}"
@@ -123,9 +107,6 @@
               - DRONE_AMAZON_INSTANCE_ALT=c5.2xlarge
               - DRONE_AMAZON_VOLUME_SIZE=100
               #- DRONE_AMAZON_MARKET_TYPE=spot
-              #- DRONE_AMAZON_RETRIES=5
-              - DRONE_AMAZON_IMAGE=ami-08306577a6694f5e7
-              - DRONE_AMAZON_USERDATA_FILE=/init/init.yml
               labels:
               - traefik.enable=true
               - traefik.http.services.autoscaler.loadbalancer.server.port=8080
@@ -134,5 +115,3 @@
               - traefik.http.routers.autoscaler.tls.certresolver=myresolver
               logging:
                 <<: *log
-
-
