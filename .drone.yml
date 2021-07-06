@@ -1,0 +1,17 @@
+---
+kind: pipeline
+name: pipeline
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: step
+  image: alpine
+  commands:
+  - echo hello!
+
+trigger:
+  branch:
+  - master
