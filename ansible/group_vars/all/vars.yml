@@ -1,0 +1,59 @@
+ansible_user: ec2-user
+compose_project_name: columnstore
+ansible_python_interpreter: python3
+
+acme_email: romcheck@gmail.com
+
+drone:
+  host: ci.columnstore.mariadb.net
+  proto: https
+  debug: true
+  docker_image: drone/drone:2.7.1
+  admin_user: "mariadb-RomanNavrotskiy"
+  admin_token: "{{ drone_admin_token_vault }}"
+  user_filter: mariadb-corporation
+  github_client: "{{ drone_github_client_vault }}"
+  github_secret: "{{ drone_github_secret_vault }}"
+  rpc_secret: "{{ drone_rpc_secret_vault }}"
+  git_force_auth: true
+  runner_cuncurrency: 1
+  s3:
+    bucket: drone-log
+    access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+
+autoscaler:
+  host: autoscaler.columnstore.mariadb.net
+  runner_docker_image: drone/drone-runner-docker:1.8.0
+  min: 0
+  max: 16
+  age: 15m
+  interval: 1m
+  proto: "{{ drone.proto }}"
+  debug: true
+  aws:
+    region: "{{ drone.s3.region }}"
+    ami: ami-08306577a6694f5e7 # Amazon Linux 2 image
+    instance: c5.2xlarge
+    instance_alt: c5.4xlarge
+    volume_size: 50
+    subnet: subnet-f64a7cab
+    security_group: sg-c6275fb0
+    ssh_key: roman
+    iam: true
+    market_type: spot # spot or regular
+    retries: 20
+
+autoscaler_arm:
+  host: autoscaler-arm.columnstore.mariadb.net
+  runner_docker_image: drone/drone-runner-docker:1.8.0
+  min: 0
+  max: 2
+  debug: true
+  aws:
+    instance: c6g.2xlarge
+    instance_alt: c6g.4xlarge
+    ami: ami-06866e21db8917d18 # ubuntu 20.04 arm canonical official image
+    market_type: spot
+    retries: 20

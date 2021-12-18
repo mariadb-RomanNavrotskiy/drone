@@ -1,17 +1,17 @@
 ---
 
-- hosts: type_aws_eip
+- hosts: all
   gather_facts: false
   become: true
 
   tasks:
 
   - name: Set python interpreter as we do not have python3 yet
-    set_fact: ansible_python_interpreter=/usr/bin/python
+    set_fact: ansible_python_interpreter=python
 
   - name: Install essential python3 with pip3
     package: name=python3-pip
-# amazon arm linux ami requirements
+# arm64 amazon linux 2 requirements
 #    name:
 #    - gcc
 #    - python3-devel
@@ -20,7 +20,7 @@
 #    - polkit
 
   - name: Set python3 interpreter for ansible
-    set_fact: ansible_python_interpreter=/usr/bin/python3
+    set_fact: ansible_python_interpreter=python3
 
   - name: Install docker
     command: amazon-linux-extras install -y docker

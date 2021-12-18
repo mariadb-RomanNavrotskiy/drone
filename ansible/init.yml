@@ -7,11 +7,11 @@ package_upgrade: false
 apt:
   sources:
     docker.list:
-      source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+      source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
       keyid: 0EBFCD88
 
-packages:
-  - docker-ce
+#packages:
+#  - docker-ce
 
 write_files:
   - path: /etc/systemd/system/docker.service.d/override.conf
@@ -41,3 +41,8 @@ write_files:
   - path: /etc/docker/server-key.pem
     encoding: b64
     content: {{ .TLSKey | base64 }}
+
+runcmd:
+  - [ apt, install, "-o", "Dpkg::Options::=--force-confold", "-y", docker-ce ]
+#  - [ systemctl, daemon-reload ]
+#  - [ systemctl, restart, docker ]

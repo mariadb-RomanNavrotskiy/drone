@@ -1,0 +1,12 @@
+drone:
+  host: ci2.columnstore.mariadb.net
+  docker_image: drone/drone
+
+autoscaler:
+  host: autoscaler2.columnstore.mariadb.net
+  runner_docker_image: drone/drone-runner-docker:2.7.1
+  max: 7
+
+autoscaler_arm:
+  host: autoscaler-arm2.columnstore.mariadb.net
+  runner_docker_image: drone/drone-runner-docker:1.8.0

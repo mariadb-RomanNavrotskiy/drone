@@ -1,0 +1,206 @@
+---
+
+- hosts: all
+  become: yes
+  gather_facts: no
+
+  handlers:
+  - name: restart autoscaler
+    command: "docker restart autoscaler"
+  - name: restart autoscaler-arm
+    command: "docker restart autoscaler-arm"
+
+  tasks:
+
+    - name: Create init directory
+      file:
+        path: "/opt/init"
+        state: directory
+
+    - name: Make config
+      copy:
+        src: init.yml
+        dest: "/opt/init/"
+      notify:
+      - restart autoscaler
+      - restart autoscaler-arm
+
+    - name: Start drone and autoscaler
+      docker_compose:
+        project_name: "{{ compose_project_name }}"
+        pull: yes
+        definition:
+          version: "2.4"
+          volumes:
+            acme:
+            drone:
+            autoscaler:
+          services:
+            traefik:
+              container_name: traefik
+              restart: "always"
+              image: traefik:v2.2
+              command:
+              - --entrypoints.web.address=:80
+              - --entrypoints.websecure.address=:443
+              - --entrypoints.web.http.redirections.entrypoint.to=websecure
+              - --entrypoints.web.http.redirections.entrypoint.scheme=https
+              - --providers.docker=true
+              - --providers.docker.exposedbydefault=false
+              - "--certificatesResolvers.myresolver.acme.email={{ acme_email }}"
+              - --certificatesResolvers.myresolver.acme.storage=/acme/acme.json
+              - --certificatesresolvers.myresolver.acme.dnschallenge=true
+              - --certificatesresolvers.myresolver.acme.dnschallenge.provider=route53
+#              - --log.level=DEBUG
+              environment:
+              - "AWS_ACCESS_KEY_ID={{ drone.s3.access_key }}"
+              - "AWS_SECRET_ACCESS_KEY={{ drone.s3.secret_key }}"
+              ports:
+              - 80:80
+              - 443:443
+              volumes:
+              - /var/run/docker.sock:/var/run/docker.sock
+              - acme:/acme
+              - /opt/traefik:/traefik
+            drone:
+              container_name: drone
+              #image: drone/drone:1
+              image:  "{{ drone.docker_image }}"
+              volumes:
+                - drone:/data
+              restart: always
+              environment:
+              - "DRONE_GITHUB_CLIENT_ID={{ drone.github_client }}"
+              - "DRONE_GITHUB_CLIENT_SECRET={{ drone.github_secret }}"
+              - "DRONE_RPC_SECRET={{ drone.rpc_secret }}"
+              - "DRONE_SERVER_HOST={{ drone.host }}"
+              - "DRONE_SERVER_PROTO={{ drone.proto }}"
+              - "DRONE_LOGS_DEBUG={{ drone.debug }}"
+              - "DRONE_USER_CREATE=username:{{ drone.admin_user }},admin:true,token:{{ drone.admin_token }}"
+              - "DRONE_USER_FILTER={{ drone.user_filter }}"
+              - "DRONE_GIT_ALWAYS_AUTH={{ drone.git_force_auth }}"
+              - "AWS_ACCESS_KEY_ID={{ drone.s3.access_key }}"
+              - "AWS_SECRET_ACCESS_KEY={{ drone.s3.secret_key }}"
+              - "DRONE_S3_BUCKET={{ drone.s3.bucket }}"
+              - "AWS_DEFAULT_REGION={{ drone.s3.region }}"
+              - "AWS_REGION={{ drone.s3.region }}"
+              - DRONE_CLEANUP_INTERVAL=8h
+              - DRONE_CLEANUP_DEADLINE_RUNNING=8h
+              - DRONE_CLEANUP_DEADLINE_PENDING=8h
+              - DRONE_JSONNET_ENABLED=true
+              labels:
+              - traefik.enable=true
+              - "traefik.http.routers.drone.rule=Host(`{{ drone.host }}`)"
+              - traefik.http.routers.drone.entrypoints=websecure
+              - traefik.http.routers.drone.tls.certresolver=myresolver
+              logging: &log
+                options:
+                  max-size: "10m"
+                  max-file: "10"
+            autoscaler:
+              container_name: autoscaler
+              image: drone/autoscaler:1
+              volumes:
+                - autoscaler:/data
+                - /opt/init:/init
+              restart: always
+              environment:
+              - "DRONE_AGENT_IMAGE={{ autoscaler.runner_docker_image }}"
+              - DRONE_AGENT_ENVIRON=DRONE_TMATE_ENABLED:true,DRONE_BUILD_DEBUG=true
+              - "DRONE_SERVER_HOST={{ drone.host }}"
+              - "DRONE_SERVER_TOKEN={{ drone.admin_token }}"
+              - "DRONE_AGENT_TOKEN={{ drone.rpc_secret }}"
+              - "DRONE_SERVER_PROTO={{ autoscaler.proto }}"
+              - "DRONE_LOGS_DEBUG={{ autoscaler.debug }}"
+# generic runner scaling options
+              - "DRONE_POOL_MIN={{ autoscaler.min }}"
+              - "DRONE_POOL_MAX={{ autoscaler.max }}"
+              - "DRONE_POOL_MIN_AGE={{ autoscaler.age }}"
+              - "DRONE_AGENT_CONCURRENCY={{ drone.runner_cuncurrency }}"
+              - DRONE_REAPER_ENABLED=true
+              - DRONE_ENABLE_REAPER=true
+              - DRONE_ENABLE_PINGER=true
+              - DRONE_PINGER_ENABLE=true
+              - "DRONE_REAPER_INTERVAL={{ autoscaler.interval }}"
+              - "DRONE_INTERVAL={{ autoscaler.interval }}"
+# aws runner options
+              - "AWS_IAM={{ autoscaler.aws.iam }}"
+              - "DRONE_AMAZON_REGION={{ autoscaler.aws.region }}"
+              - "DRONE_AMAZON_SUBNET_ID={{ autoscaler.aws.subnet }}"
+              - "DRONE_AMAZON_SECURITY_GROUP={{ autoscaler.aws.security_group }}"
+              - "DRONE_AMAZON_SSHKEY={{ autoscaler.aws.ssh_key }}"
+              - "DRONE_AMAZON_INSTANCE={{ autoscaler.aws.instance }}"
+              - "DRONE_AMAZON_INSTANCE_ALT={{ autoscaler.aws.instance_alt }}"
+              - "DRONE_AMAZON_VOLUME_SIZE={{ autoscaler.aws.volume_size }}"
+              - "DRONE_AMAZON_IMAGE={{ autoscaler.aws.ami }}"
+              - "DRONE_AMAZON_RETRIES={{ autoscaler.aws.retries }}"
+              - "DRONE_AMAZON_MARKET_TYPE={{ autoscaler.aws.market_type }}"
+              - DRONE_AMAZON_USERDATA_FILE=/init/init.yml
+              labels:
+              - traefik.enable=true
+              - traefik.http.services.autoscaler.loadbalancer.server.port=8080
+              - "traefik.http.routers.autoscaler.rule=Host(`{{ autoscaler.host }}`)"
+              - traefik.http.routers.autoscaler.entrypoints=websecure
+              - traefik.http.routers.autoscaler.tls.certresolver=myresolver
+              logging:
+                <<: *log
+
+    - name: Start autoscaler-arm
+      tags: arm
+      docker_compose:
+        project_name: "{{ compose_project_name }}"
+        pull: yes
+        definition:
+          version: "2.4"
+          volumes:
+            autoscaler-arm:
+          services:
+            autoscaler-arm:
+              container_name: autoscaler-arm
+              image: drone/autoscaler:1
+              volumes:
+                - autoscaler-arm:/data
+                - /opt/init:/init
+              restart: always
+              environment:
+              #- DRONE_AGENT_LABELS=arch:amd64
+              - DRONE_AGENT_ENVIRON=DRONE_TMATE_ENABLED:true,DRONE_BUILD_DEBUG=true
+              - "DRONE_AGENT_IMAGE={{ autoscaler_arm.runner_docker_image }}"
+              - "DRONE_SERVER_HOST={{ drone.host }}"
+              - "DRONE_SERVER_TOKEN={{ drone.admin_token }}"
+              - "DRONE_AGENT_TOKEN={{ drone.rpc_secret }}"
+              - "DRONE_SERVER_PROTO={{ autoscaler.proto }}"
+              - "DRONE_LOGS_DEBUG={{ autoscaler_arm.debug }}"
+              # pool options
+              - "DRONE_POOL_MIN={{ autoscaler_arm.min }}"
+              - "DRONE_POOL_MAX={{ autoscaler_arm.max }}"
+              - "DRONE_POOL_MIN_AGE={{ autoscaler.age }}"
+              - "DRONE_AGENT_CONCURRENCY={{ drone.runner_cuncurrency }}"
+              - DRONE_REAPER_ENABLED=true
+              - DRONE_ENABLE_REAPER=true
+              - DRONE_ENABLE_PINGER=true
+              - DRONE_PINGER_ENABLE=true
+              - "DRONE_REAPER_INTERVAL={{ autoscaler.interval }}"
+              - "DRONE_INTERVAL={{ autoscaler.interval }}"
+              # aws runner common options
+              - "AWS_IAM={{ autoscaler.aws.iam }}"
+              - "DRONE_AMAZON_REGION={{ autoscaler.aws.region }}"
+              - "DRONE_AMAZON_SUBNET_ID={{ autoscaler.aws.subnet }}"
+              - "DRONE_AMAZON_SECURITY_GROUP={{ autoscaler.aws.security_group }}"
+              - "DRONE_AMAZON_SSHKEY={{ autoscaler.aws.ssh_key }}"
+              - "DRONE_AMAZON_VOLUME_SIZE={{ autoscaler.aws.volume_size }}"
+              # aws runner instance options
+              - "DRONE_AMAZON_INSTANCE={{ autoscaler_arm.aws.instance }}"
+              - "DRONE_AMAZON_INSTANCE_ALT={{ autoscaler_arm.aws.instance_alt }}"
+              - "DRONE_AMAZON_IMAGE={{ autoscaler_arm.aws.ami }}"
+              - "DRONE_AMAZON_RETRIES={{ autoscaler_arm.aws.retries }}"
+              - "DRONE_AMAZON_MARKET_TYPE={{ autoscaler_arm.aws.market_type }}"
+              - DRONE_AMAZON_USERDATA_FILE=/init/init.yml
+              labels:
+              - traefik.enable=true
+              - traefik.http.services.autoscaler-arm.loadbalancer.server.port=8080
+              - "traefik.http.routers.autoscaler-arm.rule=Host(`{{ autoscaler_arm.host }}`)"
+              - traefik.http.routers.autoscaler-arm.entrypoints=websecure
+              - traefik.http.routers.autoscaler-arm.tls.certresolver=myresolver
+              logging:
+                <<: *log
