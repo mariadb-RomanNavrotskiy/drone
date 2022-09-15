@@ -1,7 +1,7 @@
 provider "aws" {}
 
 resource "aws_instance" "drone" {
-  instance_type          = "t2.small"
+  instance_type          = "t2.medium"
   ami                    = "ami-0323c3dd2da7fb37d"
   subnet_id              = aws_subnet.drone.id
   vpc_security_group_ids = [aws_security_group.drone.id]

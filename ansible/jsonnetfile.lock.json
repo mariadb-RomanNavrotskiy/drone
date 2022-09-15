@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/romcheck/ansible-roles.git",
+          "subdir": "user"
+        }
+      },
+      "version": "fdb7e62d6238368ea971e31c233eb62a9221ce73",
+      "sum": "Qd5hIhAhmVhoTpUUuog7rnec1Djtie/oUBmd2FxCIMw="
+    }
+  ],
+  "legacyImports": false
+}

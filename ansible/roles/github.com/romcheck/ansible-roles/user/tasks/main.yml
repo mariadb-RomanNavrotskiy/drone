@@ -1,0 +1,35 @@
+---
+
+- name: Add sudo group
+  group:
+    name: "{{ sudo_group }}"
+
+- name: Add user
+  when: user_add
+  user:
+    name: "{{ user }}"
+    group: "{{ user_group }}"
+    groups: "{{ user_groups }}"
+    shell: /bin/bash
+
+- name: Set authorized key
+  when: pubkey
+  authorized_key:
+    user: "{{ user }}"
+    key: "{{ key }}"
+    exclusive: "{{ key_exclusive }}"
+
+- name: Ensure sudoers
+  when: user_add
+  lineinfile:
+    path: "/etc/sudoers.d/sudo"
+    line: "%{{ sudo_group }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+
+- name: Disable password authentication
+  notify: restart sshd
+  when: disable_password_auth
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: "^(.*)PasswordAuthentication(.*)$"
+    line: "PasswordAuthentication no"

@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: user
+      vars:
+        user: drrtuy
+        user_groups: "sudo,docker"
+        key_exclusive: true
+    - role: user
+      vars:
+        user: mariadb-LeonidFedorov
+        user_groups: "sudo,docker"
+        key_exclusive: true

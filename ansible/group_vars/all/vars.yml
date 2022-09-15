@@ -8,15 +8,19 @@ drone:
   host: ci.columnstore.mariadb.net
   proto: https
   debug: true
-  docker_image: drone/drone:2.7.1
+  #docker_image: drone/drone:2
+  docker_image: romcheck/drone
   admin_user: "mariadb-RomanNavrotskiy"
-  admin_token: "{{ drone_admin_token_vault }}"
+  admin_token: "{{ lookup('env', 'DRONE_TOKEN') }}"
   user_filter: mariadb-corporation
-  github_client: "{{ drone_github_client_vault }}"
-  github_secret: "{{ drone_github_secret_vault }}"
-  rpc_secret: "{{ drone_rpc_secret_vault }}"
+  github_client: "{{ lookup('env', 'DRONE_GITHUB_CLIENT_ID') }}"
+  github_secret: "{{ lookup('env', 'DRONE_GITHUB_CLIENT_SECRET') }}"
+  rpc_secret: "{{ lookup('env', 'DRONE_AGENT_TOKEN') }}"
   git_force_auth: true
   runner_cuncurrency: 1
+  cleanup_interval: 180m
+  cleanup_pending_interval: 2h
+  cleanup_running_interval: 8h
   s3:
     bucket: drone-log
     access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
@@ -27,33 +31,36 @@ autoscaler:
   host: autoscaler.columnstore.mariadb.net
   runner_docker_image: drone/drone-runner-docker:1.8.0
   min: 0
-  max: 16
+  max: 40
   age: 15m
   interval: 1m
+  cleanup_interval: 180m
   proto: "{{ drone.proto }}"
   debug: true
   aws:
-    region: "{{ drone.s3.region }}"
     ami: ami-08306577a6694f5e7 # Amazon Linux 2 image
+    region: "{{ drone.s3.region }}"
     instance: c5.2xlarge
     instance_alt: c5.4xlarge
+    #market_type: spot
+    market_type: regular
+    retries: 20
     volume_size: 50
     subnet: subnet-f64a7cab
     security_group: sg-c6275fb0
     ssh_key: roman
     iam: true
-    market_type: spot # spot or regular
-    retries: 20
 
 autoscaler_arm:
   host: autoscaler-arm.columnstore.mariadb.net
   runner_docker_image: drone/drone-runner-docker:1.8.0
   min: 0
-  max: 2
+  max: 40
   debug: true
   aws:
     instance: c6g.2xlarge
     instance_alt: c6g.4xlarge
     ami: ami-06866e21db8917d18 # ubuntu 20.04 arm canonical official image
-    market_type: spot
+    #market_type: spot
+    market_type: regular
     retries: 20

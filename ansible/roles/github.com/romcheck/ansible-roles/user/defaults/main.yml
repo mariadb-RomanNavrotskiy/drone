@@ -1,0 +1,12 @@
+---
+
+user: "user"
+user_group: "users"
+user_groups: ""
+user_add: true
+sudo_group: "sudo"
+pubkey: true
+key: "https://github.com/{{ user }}.keys"
+key_exclusive: false
+disable_password_auth: false
+sshd_service_name: ssh
