@@ -18,9 +18,9 @@ drone:
   rpc_secret: "{{ lookup('env', 'DRONE_AGENT_TOKEN') }}"
   git_force_auth: true
   runner_cuncurrency: 1
-  cleanup_interval: 180m
-  cleanup_pending_interval: 2h
-  cleanup_running_interval: 8h
+  cleanup_interval: 5m
+  cleanup_pending_interval: 1h
+  cleanup_running_interval: 4h
   s3:
     bucket: drone-log
     access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
@@ -32,9 +32,8 @@ autoscaler:
   runner_docker_image: drone/drone-runner-docker:1.8.0
   min: 0
   max: 40
-  age: 15m
-  interval: 1m
-  cleanup_interval: 180m
+  age: 60m
+  interval: 2m
   proto: "{{ drone.proto }}"
   debug: true
   aws:
