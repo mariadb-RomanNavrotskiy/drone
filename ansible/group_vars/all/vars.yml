@@ -41,8 +41,7 @@ autoscaler:
     region: "{{ drone.s3.region }}"
     instance: c5.2xlarge
     instance_alt: c5.4xlarge
-    market_type: spot
-    #market_type: regular
+    market_type: regular # might be spot
     retries: 20
     volume_size: 50
     subnet: subnet-f64a7cab
@@ -60,6 +59,5 @@ autoscaler_arm:
     instance: c6g.2xlarge
     instance_alt: c6g.4xlarge
     ami: ami-06866e21db8917d18 # ubuntu 20.04 arm canonical official image
-    market_type: spot
-    #market_type: regular
+    market_type: regular # might be spot
     retries: 20
