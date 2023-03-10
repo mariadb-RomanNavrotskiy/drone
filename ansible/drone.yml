@@ -68,6 +68,7 @@
               expose:
                 - "80"
               environment:
+                - "DRONE_LOG_FILE_MAX_SIZE=25"
                 - "DRONE_GITHUB_CLIENT_ID={{ drone.github_client }}"
                 - "DRONE_GITHUB_CLIENT_SECRET={{ drone.github_secret }}"
                 - "DRONE_RPC_SECRET={{ drone.rpc_secret }}"

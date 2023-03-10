@@ -4,3 +4,5 @@ terraform {
     key    = "drone"
   }
 }
+
+provider "aws" {}

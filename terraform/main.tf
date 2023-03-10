@@ -1,5 +1,3 @@
-provider "aws" {}
-
 resource "aws_instance" "drone" {
   instance_type          = "t2.medium"
   ami                    = "ami-0323c3dd2da7fb37d"
@@ -8,17 +6,17 @@ resource "aws_instance" "drone" {
   key_name               = "roman"
   iam_instance_profile   = "buildbot"
   root_block_device {
-    volume_size           = 20
+    volume_size = 20
   }
-  tags                   = {
+  tags = {
     Name = "drone"
   }
 }
 
 resource "aws_eip" "drone" {
-  vpc               = true
+  vpc = true
   tags = {
-    Name            = "drone"
+    Name = "drone"
   }
 }
 
@@ -48,7 +46,7 @@ resource "aws_subnet" "drone" {
 }
 
 resource "aws_security_group" "drone" {
-  vpc_id      = aws_vpc.drone.id
+  vpc_id = aws_vpc.drone.id
 
   ingress {
     from_port   = 443
@@ -85,7 +83,7 @@ resource "aws_security_group" "drone" {
 
 resource "aws_default_route_table" "drone" {
   default_route_table_id = aws_vpc.drone.default_route_table_id
-route {
+  route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.drone.id
   }

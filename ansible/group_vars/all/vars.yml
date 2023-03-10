@@ -7,8 +7,7 @@ acme_email: romcheck@gmail.com
 drone:
   host: ci.columnstore.mariadb.net
   proto: https
-  debug: true
-  #docker_image: drone/drone:2
+  debug: false
   docker_image: romcheck/drone
   admin_user: "mariadb-RomanNavrotskiy"
   admin_token: "{{ lookup('env', 'DRONE_TOKEN') }}"
@@ -18,9 +17,9 @@ drone:
   rpc_secret: "{{ lookup('env', 'DRONE_AGENT_TOKEN') }}"
   git_force_auth: true
   runner_cuncurrency: 1
-  cleanup_interval: 5m
+  cleanup_interval: 25m
   cleanup_pending_interval: 1h
-  cleanup_running_interval: 4h
+  cleanup_running_interval: 6h
   s3:
     bucket: drone-log
     access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
@@ -32,12 +31,12 @@ autoscaler:
   runner_docker_image: drone/drone-runner-docker:1.8.0
   min: 0
   max: 40
-  age: 15m
+  age: 30m
   interval: 2m
   proto: "{{ drone.proto }}"
-  debug: true
+  debug: false
   aws:
-    ami: ami-08306577a6694f5e7 # Amazon Linux 2 image
+    ami: ami-08306577a6694f5e7 # ubuntu 20.04 canonical official image
     region: "{{ drone.s3.region }}"
     instance: c5.2xlarge
     instance_alt: c5.4xlarge
@@ -54,10 +53,10 @@ autoscaler_arm:
   runner_docker_image: drone/drone-runner-docker:1.8.0
   min: 0
   max: 40
-  debug: true
+  debug: false
   aws:
-    instance: c6g.2xlarge
-    instance_alt: c6g.4xlarge
+    instance: c7g.2xlarge
+    instance_alt: c7g.4xlarge
     ami: ami-06866e21db8917d18 # ubuntu 20.04 arm canonical official image
     market_type: regular # might be spot
     retries: 20
